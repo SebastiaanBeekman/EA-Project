@@ -19,6 +19,7 @@ class GeneticAlgorithm:
 		self.number_of_generations = 0
 		self.verbose = False
 		self.print_final_results = True 
+		self.are_all_equal = False # Added to stop if all individuals are equal
 
 		if "verbose" in options:
 			self.verbose = options["verbose"]
@@ -66,7 +67,7 @@ class GeneticAlgorithm:
 	def run( self ):
 		try:
 			self.initialize_population()
-			while( self.fitness.number_of_evaluations < self.evaluation_budget and not self.all_equal()): # NEW: stop if all individuals have the same fitness
+			while( self.fitness.number_of_evaluations < self.evaluation_budget): # stop if all individuals have the same fitness
 				self.number_of_generations += 1
 				if( self.verbose and self.number_of_generations%100 == 0 ):
 					self.print_statistics()
@@ -74,7 +75,10 @@ class GeneticAlgorithm:
 				offspring = self.make_offspring()
 				selection = self.make_selection(offspring)
 				self.population = selection
-			if( self.verbose ):
+				if self.all_equal():
+					print("All individuals have the same fitness")
+					break
+			if( self.verbose and self.are_all_equal):
 				self.print_statistics()
 		except ValueToReachFoundException as exception:
 			if( self.print_final_results ):
