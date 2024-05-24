@@ -6,6 +6,11 @@ from GeneticAlgorithm import GeneticAlgorithm
 import GraphGeneration
 import FitnessFunction
 
+
+
+
+
+
 if __name__ == "__main__":
 	crossovers = ["UniformCrossover", "OnePointCrossover", "TwoPointCrossover"] # add later: "CustomCrossover"
 	for set in ["setA","setB","setC","setD","setE"]:
