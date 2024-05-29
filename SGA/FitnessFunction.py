@@ -18,6 +18,11 @@ class FitnessFunction:
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
 
+	def partial_evaluate( self, individual: Individual, parent: Individual ):
+		self.number_of_evaluations += 1
+		if individual.fitness >= self.value_to_reach:
+			raise ValueToReachFoundException(individual)
+
 class OneMax(FitnessFunction):
 	def __init__( self, dimensionality ):
 		super().__init__()
@@ -142,5 +147,5 @@ class MaxCut(FitnessFunction):
 
 		individual.fitness = result
 		self.evaluation_time += time.time() - start
-		super().evaluate(individual, parent)
+		super().partial_evaluate(individual, parent)
 
