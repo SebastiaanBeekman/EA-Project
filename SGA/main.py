@@ -6,7 +6,7 @@ import FitnessFunction
 if __name__ == "__main__":
 	crossovers = ["CustomCrossover", "UniformCrossover", "OnePointCrossover"]
 	for cx in crossovers:
-		inst = "maxcut-instances/setE/n0000020i00.txt"
+		inst = "SGA/maxcut-instances/setA/n0000025i00.txt"
 		with open("output-{}.txt".format(cx),"w") as f:
 			population_size = 500
 			num_evaluations_list = []
@@ -14,7 +14,7 @@ if __name__ == "__main__":
 			num_success = 0
 			for i in range(num_runs):
 				fitness = FitnessFunction.MaxCut(inst)
-				genetic_algorithm = GeneticAlgorithm(fitness,population_size,variation=cx,evaluation_budget=100000,verbose=False)
+				genetic_algorithm = GeneticAlgorithm(fitness,population_size,variation=cx,evaluation_budget=100000,verbose=False,heuristic_fraction=0.5,local_search_fraction=0.1)
 				best_fitness, num_evaluations = genetic_algorithm.run()
 				if best_fitness == fitness.value_to_reach:
 					num_success += 1
