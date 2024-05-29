@@ -6,11 +6,11 @@ import FitnessFunction
 if __name__ == "__main__":
 	crossovers = ["CustomCrossover", "UniformCrossover", "OnePointCrossover"]
 	for cx in crossovers:
-		inst = "maxcut-instances/setE/n0000020i00.txt"
+		inst = "SGA/maxcut-instances/setA/n0000006i00.txt"
 		with open("output-{}.txt".format(cx),"w") as f:
 			population_size = 500
 			num_evaluations_list = []
-			num_runs = 30
+			num_runs = 10
 			num_success = 0
 			for i in range(num_runs):
 				fitness = FitnessFunction.MaxCut(inst)

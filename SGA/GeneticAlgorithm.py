@@ -47,7 +47,7 @@ class GeneticAlgorithm:
 		for i in range(len(order)//2):
 			offspring = offspring + self.variation_operator(self.population[order[2*i]],self.population[order[2*i+1]])
 		for individual in offspring:
-			self.fitness.evaluate(individual)
+			self.fitness.partial_evaluate(individual)
 		return offspring
 
 	def make_selection( self, offspring ):
