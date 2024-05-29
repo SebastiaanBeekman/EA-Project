@@ -4,10 +4,13 @@ import itertools as it
 import Individual
 from Utils import ValueToReachFoundException
 
+import time
+
 class FitnessFunction:
 	def __init__( self ):
 		self.dimensionality = 1 
 		self.number_of_evaluations = 0
+		self.evaluation_time = 0
 		self.value_to_reach = np.inf
 
 	def evaluate( self, individual: Individual ):
@@ -103,6 +106,7 @@ class MaxCut(FitnessFunction):
 		return len(adjacency_list(v))
 
 	def evaluate( self, individual: Individual ):
+		start = time.time()
 		result = 0
 		for e in self.edge_list:
 			v0, v1 = e
@@ -111,9 +115,11 @@ class MaxCut(FitnessFunction):
 				result += w
 
 		individual.fitness = result
+		self.evaluation_time += time.time() - start
 		super().evaluate(individual)
   
 	def partial_evaluate( self, individual: Individual, parent: Individual ):
+		start = time.time()
 		#start from parent fitness
 		result = parent.fitness
 	
@@ -135,5 +141,6 @@ class MaxCut(FitnessFunction):
 						result -= self.get_weight(node, neighbor)
 
 		individual.fitness = result
-		super().evaluate(individual)
+		self.evaluation_time += time.time() - start
+		super().evaluate(individual, parent)
 
