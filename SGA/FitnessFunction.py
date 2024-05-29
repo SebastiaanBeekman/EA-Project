@@ -112,4 +112,28 @@ class MaxCut(FitnessFunction):
 
 		individual.fitness = result
 		super().evaluate(individual)
+  
+	def partial_evaluate( self, individual: Individual, parent: Individual ):
+		#start from parent fitness
+		result = parent.fitness
+	
+		#get the differing nodes between the parent and the child
+		differing_nodes = np.where(individual.genotype != parent.genotype)[0]
+
+		#iterate over the differing nodes
+		for node in differing_nodes:
+			#iterate over the neighbors of the node
+			for neighbor in self.adjacency_list[node]:
+				#check if the neighbor is in the differing nodes, if both flipped, the fitness will not change
+				if neighbor in differing_nodes:
+					pass
+				#else, update the fitness
+				else:
+					if individual.genotype[node] != individual.genotype[neighbor]:
+						result += self.get_weight(node, neighbor)
+					else:
+						result -= self.get_weight(node, neighbor)
+
+		individual.fitness = result
+		super().evaluate(individual)
 
