@@ -38,6 +38,8 @@ class GeneticAlgorithm:
 
 	def initialize_population( self ):
 		self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
+        # Note including the adjacency list in the init call
+        # self.population = [Individual.initialize_from_square_assumption(self.fitness.dimensionality, self.fitness.adjacency_list) for i in range(self.population_size)]
 		for individual in self.population:
 			self.fitness.evaluate(individual)
 
