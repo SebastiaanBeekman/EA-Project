@@ -21,7 +21,6 @@ class Individual:
 def recursive_init_for_square(idx: int, adjacency_list, passed_over: list[bool], genotype, include):
 	if passed_over[idx] == True:
 		return
-
 	genotype[idx] = include
 	passed_over[idx] = True
 	for i in adjacency_list[idx]:
@@ -31,4 +30,4 @@ def recursive_init_for_square(idx: int, adjacency_list, passed_over: list[bool],
 def flip(v):
 	# if 0: 0 * -2 + 1 = 1
 	# if 1: 1 * -2 + 1 = 0
-	return v * -2 + 1
+	return v * -1 + 1
