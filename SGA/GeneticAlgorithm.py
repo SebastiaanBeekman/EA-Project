@@ -8,6 +8,9 @@ from FitnessFunction import FitnessFunction
 from Individual import Individual
 from Utils import ValueToReachFoundException
 
+import networkx as nx
+import cvxgraphalgs as cvxgr
+
 class GeneticAlgorithm:
 	def __init__(self, fitness: FitnessFunction, population_size, **options ): 
 		self.fitness = fitness
@@ -19,6 +22,7 @@ class GeneticAlgorithm:
 		self.number_of_generations = 0
 		self.verbose = False
 		self.print_final_results = True 
+		self.heuristic_fraction = 0.5
 
 		if "verbose" in options:
 			self.verbose = options["verbose"]
@@ -36,10 +40,44 @@ class GeneticAlgorithm:
 			elif options["variation"] == "CustomCrossover":
 				self.variation_operator = partial(Variation.custom_crossover, self.fitness)
 
+		if "heuristic_fraction" in options:
+			self.heuristic_fraction = options["heuristic_fraction"]
+	
+	def goemans_williamson( self, graph ):
+		G = nx.Graph()
+		adj_list = self.fitness.adjacency_list
+
+		for u in adj_list.keys():
+			for v in adj_list[u]:
+				if( v > u ):
+					G.add_edge(u, v, weight=self.fitness.get_weight(u,v))
+		
+		sol = cvxgr.algorithms.goemans_williamson_weighted(G)
+		return sol.left, sol.right
+
 	def initialize_population( self ):
-		self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
-		for individual in self.population:
+		# self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
+		# for individual in self.population:
+		# 	self.fitness.evaluate(individual)
+		heuristic_population_size = int(self.population_size * self.heuristic_fraction)
+		random_population_size = self.population_size - heuristic_population_size
+
+		population = []
+		
+		# Generate heuristic-based individuals
+		for _ in range(heuristic_population_size):
+			A, B = self.goemans_williamson(self.fitness.adjacency_list)
+			individual = Individual.from_sets(A, B, self.fitness.dimensionality)
 			self.fitness.evaluate(individual)
+			population.append(individual)
+		
+		# Generate random individuals
+		for _ in range(random_population_size):
+			individual = Individual.initialize_uniform_at_random(self.fitness.dimensionality)
+			self.fitness.evaluate(individual)
+			population.append(individual)
+		
+		self.population = population
 
 	def make_offspring( self ):
 		offspring = []
