@@ -1,1 +1,0 @@
-instance number_vertices number_edges population_size runtime num_success/num_runs num_evaluations_10_percentile num_evaluations_50_percentile num_evaluations_90_percentile

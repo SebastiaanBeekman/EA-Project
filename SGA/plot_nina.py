@@ -104,10 +104,10 @@ def plot_number_of_generations_vs_fitness(crossovers, population_size, graphs, n
 def preprocess(graphs, number_vertices):
     instances = []
     answers = []
-    directory = "maxcut-instances/{}".format(graphs)
+    directory = "SGA/maxcut-instances/{}".format(graphs)
     files = [file for file in os.listdir(directory) if file.endswith(".txt") and f"{number_vertices}i" in file]
     for i in range(len(files)):
-        inst = "maxcut-instances/{}/{}".format(graphs,files[i])
+        inst = "SGA/maxcut-instances/{}/{}".format(graphs,files[i])
         ans = inst.replace(".txt",".bkv")
         
         print(inst, ans)
@@ -130,4 +130,5 @@ def preprocess(graphs, number_vertices):
 if __name__ == "__main__":
     # preprocess("setA", "UniformCrossover", 6)
     # fitness_population_size("setA", 12)
-    number_of_generations_vs_fitness("setA", 25)
+    # number_of_generations_vs_fitness("setA", 25)
+    preprocess("setA", 6)
