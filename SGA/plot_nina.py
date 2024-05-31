@@ -126,8 +126,74 @@ def preprocess(graphs, number_vertices):
             instances.append(inst)
     return instances, answers
 
+def plot_evaluation_time(graphs, crossover="UniformCrossover"):
+    instances = {}
+    answers = []
+    directory = "SGA/maxcut-instances/{}".format(graphs)
+    files = [file for file in os.listdir(directory) if file.endswith(".txt")]
+    for i in range(len(files)):
+        inst = "SGA/maxcut-instances/{}/{}".format(graphs,files[i])
+        ans = inst.replace(".txt",".bkv")
+        
+        print(inst, ans)
+        
+        with open( inst, "r" ) as f_in:
+            lines = f_in.readlines()
+            first_line = lines[0].split()
+            number_of_vertices = int(first_line[0])
+            
+        with open( ans, "r" ) as f_in:
+            lines = f_in.readlines()
+            a = int(lines[0])
+            answers.append(a)
+            
+        if number_of_vertices in instances:
+            instances[number_of_vertices].append(inst)
+        else:
+            instances[number_of_vertices] = [inst]
+            
+    average_time_evaluation = {}
+    average_time_partial_evaluation = {}
+    
+    for number_vertices in instances:
+        for inst in instances[number_vertices]:
+            fitness = FitnessFunction.MaxCut(inst)
+            genetic_algorithm = GeneticAlgorithm(fitness,500,variation=crossover,evaluation_budget=100000,verbose=False)
+            best_fitness, num_evaluations, generation = genetic_algorithm.run()
+            if number_vertices in average_time_evaluation:
+                average_time_evaluation[number_vertices].append(fitness.evaluation_time/num_evaluations)
+            else:
+                average_time_evaluation[number_vertices] = [fitness.evaluation_time/num_evaluations]
+                
+            genetic_algorithm = GeneticAlgorithm(fitness,500,variation=crossover,evaluation_budget=100000,verbose=False, evaluation="partial_evaluate")
+            best_fitness, num_evaluations, generation = genetic_algorithm.run()
+            if number_vertices in average_time_partial_evaluation:
+                average_time_partial_evaluation[number_vertices].append(fitness.evaluation_time/num_evaluations)
+            else:
+                average_time_partial_evaluation[number_vertices] = [fitness.evaluation_time/num_evaluations]
+                
+    for number_vertices in average_time_evaluation:
+        average_time_evaluation[number_vertices] = np.mean(average_time_evaluation[number_vertices])
+        average_time_partial_evaluation[number_vertices] = np.mean(average_time_partial_evaluation[number_vertices])
+        
+    plt.figure()
+    plt.plot(average_time_evaluation.keys(),average_time_evaluation.values())
+    plt.plot(average_time_partial_evaluation.keys(),average_time_partial_evaluation.values())
+    plt.yscale("log")
+    plt.legend(["evaluate","partial_evaluate"])
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Average time per evaluation")
+    plt.title(f"Average time per evaluation vs number of vertices {graphs}")
+    plt.savefig("SGA/evaluation_time_comparison_{}_{}.png".format(graphs, crossover))
+    
+
 
 if __name__ == "__main__":
     # preprocess("setA", "UniformCrossover", 6)
     # fitness_population_size("setA", 12)
-    number_of_generations_vs_fitness("setA", 25)
+    #number_of_generations_vs_fitness("setA", 25)
+    plot_evaluation_time("setA", crossover= "OnePointCrossover")
+    plot_evaluation_time("setB", crossover="OnePointCrossover")
+    plot_evaluation_time("setC", crossover="OnePointCrossover")
+    plot_evaluation_time("setD", crossover="OnePointCrossover")
+    plot_evaluation_time("setE", crossover="OnePointCrossover")
