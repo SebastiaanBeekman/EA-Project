@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 
 
 def fitness_population_size(graphs, number_vertices):
-    population_size = [2, 10, 20, 30, 40, 50]
-    runs = 10
+    population_size = [10, 100, 500, 1000]
+    runs = 5
     instances, answers = preprocess(graphs, number_vertices)
     inst = instances[0]
     ans = answers[0]
-    crossovers = {"UniformCrossover": [], "OnePointCrossover": [], "TwoPointCrossover": []}
+    crossovers = {"OnePointCrossover": [], "TwoPointCrossover": [], "UniformCrossover": [], "EdgeCrossover": []}
     print(ans)
     for crossover in crossovers:
         resulting_fitness = []
@@ -21,33 +21,42 @@ def fitness_population_size(graphs, number_vertices):
             for _ in range(runs):
                 fitness = FitnessFunction.MaxCut(inst)
                 fitness.value_to_reach = ans
-                genetic_algorithm = GeneticAlgorithm(fitness, pop_size, variation=crossover, verbose=False, evaluation_budget = 100000, are_all_equal = True)
+                evaluation_budget = 500000
+                genetic_algorithm = GeneticAlgorithm(fitness, pop_size, variation=crossover, verbose=False, evaluation_budget = evaluation_budget, are_all_equal = True)
                 best_fitness, num_evaluations, generations = genetic_algorithm.run()
                 run_result.append(best_fitness/ans)
             resulting_fitness.append(run_result)
         crossovers[crossover] = resulting_fitness
     
-    plot_fitness_population_size(crossovers, population_size, graphs, number_vertices)
+    plot_fitness_population_size(crossovers, population_size, graphs, number_vertices, evaluation_budget)
     
     
-def plot_fitness_population_size(crossovers, population_size, graphs, number_vertices):    
-    means_one = np.mean(crossovers["OnePointCrossover"], axis=1)
-    st_dev_one = np.std(crossovers["OnePointCrossover"], axis=1)
-    means_two = np.mean(crossovers["TwoPointCrossover"], axis=1)
-    st_dev_two = np.std(crossovers["TwoPointCrossover"], axis=1)
-    means_uniform = np.mean(crossovers["UniformCrossover"], axis=1)
-    st_dev_uniform = np.std(crossovers["UniformCrossover"], axis=1)
+def plot_fitness_population_size(crossovers, population_size, graphs, number_vertices, evualuation_budget = 100000):    
+    means_one = np.median(crossovers["OnePointCrossover"], axis=1)
+    # st_dev_one = np.std(crossovers["OnePointCrossover"], axis=1)
+    means_two = np.median(crossovers["TwoPointCrossover"], axis=1)
+    # st_dev_two = np.std(crossovers["TwoPointCrossover"], axis=1)
+    means_uniform = np.median(crossovers["UniformCrossover"], axis=1)
+    # st_dev_uniform = np.std(crossovers["UniformCrossover"], axis=1)
+    means_edge = np.median(crossovers["EdgeCrossover"], axis=1)
+    # st_dev_edge = np.std(crossovers["EdgeCrossover"], axis=1)
+    # means_edge2 = np.mean(crossovers["EdgeCrossover2"], axis=1)
+    # st_dev_edge2 = np.std(crossovers["EdgeCrossover2"], axis=1)
     
     
-    plt.errorbar(population_size, means_one, yerr=st_dev_one, fmt='o', capsize=5, color='blue')
+    # plt.errorbar(population_size, means_one, yerr=st_dev_one, fmt='o', capsize=5, color='blue')
     plt.plot(population_size, means_one, color='blue', label='OnePointCrossover')
-    plt.errorbar(population_size, means_two, yerr=st_dev_two, fmt='o', capsize=5, color='red')
+    # plt.errorbar(population_size, means_two, yerr=st_dev_two, fmt='o', capsize=5, color='red')
     plt.plot(population_size, means_two, color='red', label='TwoPointCrossover')
-    plt.errorbar(population_size, means_uniform, yerr=st_dev_uniform, fmt='o', capsize=5, color='green')
+    # plt.errorbar(population_size, means_uniform, yerr=st_dev_uniform, fmt='o', capsize=5, color='green')
     plt.plot(population_size, means_uniform, color='green', label='UniformCrossover')
+    # plt.errorbar(population_size, means_edge, yerr=st_dev_edge, fmt='o', capsize=5, color='orange')
+    plt.plot(population_size, means_edge, color='orange', label='EdgeCrossover')
+    # plt.errorbar(population_size, means_edge2, yerr=st_dev_edge2, fmt='o', capsize=5, color='purple')
+    # plt.plot(population_size, means_edge2, color='purple', label='EdgeCrossover')
     plt.xlabel("Population size")
-    plt.ylabel("Best fitness upon termination")
-    plt.title(f"Fitness vs Population size for a {graphs} graph with {number_vertices} vertices, evaluation budget of 100000")
+    plt.ylabel("Median of best fitness upon termination")
+    plt.title(f"Fitness vs Population size for a {graphs} graph with {number_vertices} vertices, evaluation budget of {evualuation_budget}")
     plt.legend()
     plt.show()
     
@@ -129,6 +138,6 @@ def preprocess(graphs, number_vertices):
 
 if __name__ == "__main__":
     # preprocess("setA", "UniformCrossover", 6)
-    # fitness_population_size("setA", 12)
+    fitness_population_size("setE", 40)
     # number_of_generations_vs_fitness("setA", 25)
-    preprocess("setA", 6)
+    # preprocess("setA", 6)

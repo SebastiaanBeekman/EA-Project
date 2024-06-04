@@ -4,7 +4,7 @@ from GeneticAlgorithm import GeneticAlgorithm
 import FitnessFunction
 
 if __name__ == "__main__":
-	crossovers = ["UniformCrossover", "OnePointCrossover", "EdgeCrossover", "TwoPointCrossover"]
+	crossovers = ["EdgeCrossover"]
 	for cx in crossovers:
 		print("Running with crossover: {}".format(cx))
 		inst = "SGA/maxcut-instances/setB/n0000009i00.txt"
