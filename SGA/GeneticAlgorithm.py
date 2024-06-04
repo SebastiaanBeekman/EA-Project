@@ -63,7 +63,11 @@ class GeneticAlgorithm:
 			if self.evaluation_operator == "evaluate":
 				self.fitness.evaluate(individual)
 			else:
-				self.fitness.partial_evaluate(individual, self.population[order[2*i]])
+				parents = np.stack([self.population[order[2*i]],self.population[order[2*i+1]], 1-self.population[order[2*i]], 1-self.population[order[2*i+1]]])
+				#distance from parent to individual can be calculated as the absolute difference between the two
+				distance = np.sum(np.abs(parents - individual.genotype), axis=1)
+				#the closest parent is the one with the smallest distance
+				self.fitness.partial_evaluate(individual, parents[np.argmin(distance)])
 		return offspring
 
 	def make_selection( self, offspring ):
