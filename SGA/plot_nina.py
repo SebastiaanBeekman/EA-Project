@@ -184,7 +184,7 @@ def plot_evaluation_time(graphs, crossover="UniformCrossover"):
     plt.xlabel("Number of vertices")
     plt.ylabel("Average time per evaluation")
     plt.title(f"Average time per evaluation vs number of vertices {graphs}")
-    plt.savefig("SGA/evaluation_time_comparison_{}_{}.png".format(graphs, crossover))
+    plt.savefig("SGA/partial_evaluation_figures/evaluation_time_comparison_{}_{}.png".format(graphs, crossover))
     
 
 
