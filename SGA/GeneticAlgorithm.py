@@ -14,6 +14,7 @@ class GeneticAlgorithm:
 		self.evaluation_budget = 1000000
 		self.variation_operator = Variation.uniform_crossover
 		self.selection_operator = Selection.tournament_selection
+		self.evaluation_operator = "evaluate"
 		self.population_size = population_size
 		self.population = []
 		self.number_of_generations = 0
@@ -41,6 +42,12 @@ class GeneticAlgorithm:
 			elif options["variation"] == "EdgeCrossover2":
 				self.variation_operator = partial(Variation.edge_crossover2, self.fitness.edge_list)
     
+    
+		if "evaluation" in options:
+			if options["evaluation"] == "evaluate":
+				self.evaluation_operator = "evaluate"
+			elif options["evaluation"] == "partial_evaluate":
+				self.evaluation_operator = "partial_evaluate"
 
 	def initialize_population( self ):
 		self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
@@ -53,7 +60,10 @@ class GeneticAlgorithm:
 		for i in range(len(order)//2):
 			offspring = offspring + self.variation_operator(self.population[order[2*i]],self.population[order[2*i+1]])
 		for individual in offspring:
-			self.fitness.evaluate(individual)
+			if self.evaluation_operator == "evaluate":
+				self.fitness.evaluate(individual)
+			else:
+				self.fitness.partial_evaluate(individual, self.population[order[2*i]])
 		return offspring
 
 	def make_selection( self, offspring ):
