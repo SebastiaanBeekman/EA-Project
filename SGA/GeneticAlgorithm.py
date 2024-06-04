@@ -37,6 +37,11 @@ class GeneticAlgorithm:
 				self.variation_operator = Variation.two_point_crossover
 			elif options["variation"] == "CustomCrossover":
 				self.variation_operator = partial(Variation.custom_crossover, self.fitness)
+			elif options["variation"] == "EdgeCrossover":
+				self.variation_operator = partial(Variation.edge_crossover, self.fitness.edge_list)
+			elif options["variation"] == "EdgeCrossover2":
+				self.variation_operator = partial(Variation.edge_crossover2, self.fitness.edge_list)
+    
     
 		if "evaluation" in options:
 			if options["evaluation"] == "evaluate":
