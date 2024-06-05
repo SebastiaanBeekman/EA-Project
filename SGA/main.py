@@ -17,7 +17,7 @@ if __name__ == "__main__":
 			num_success = 0
 			for i in range(num_runs):
 				fitness = FitnessFunction.MaxCut(inst)
-				genetic_algorithm = GeneticAlgorithm(fitness,population_size,variation=cx,evaluation_budget=100000,verbose=False)
+				genetic_algorithm = GeneticAlgorithm(fitness,population_size,variation=cx,evaluation_budget=100000,verbose=False, evaluation="partial_evaluate")
 				best_fitness, num_evaluations, num_generations = genetic_algorithm.run()
 				if best_fitness == fitness.value_to_reach:
 					num_success += 1

@@ -18,7 +18,7 @@ class FitnessFunction:
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
 
-	def partial_evaluate( self, individual: Individual, parent: Individual ):
+	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
 		self.number_of_evaluations += 1
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
@@ -123,13 +123,13 @@ class MaxCut(FitnessFunction):
 		self.evaluation_time += time.time() - start
 		super().evaluate(individual)
   
-	def partial_evaluate( self, individual: Individual, parent: Individual ):
+	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
 		start = time.time()
 		#start from parent fitness
-		result = parent.fitness
+		result = parent_fitness
 	
 		#get the differing nodes between the parent and the child
-		differing_nodes = np.where(individual.genotype != parent.genotype)[0]
+		differing_nodes = np.where(individual.genotype != parent_genotype)[0]
 
 		#iterate over the differing nodes
 		for node in differing_nodes:
@@ -147,5 +147,5 @@ class MaxCut(FitnessFunction):
 
 		individual.fitness = result
 		self.evaluation_time += time.time() - start
-		super().partial_evaluate(individual, parent)
+		super().partial_evaluate(individual, parent_genotype, parent_fitness)
 
