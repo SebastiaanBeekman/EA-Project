@@ -63,7 +63,7 @@ class GeneticAlgorithm:
 			if self.evaluation_operator == "evaluate":
 				self.fitness.evaluate(individual)
 			else:
-				parents_genotype = np.stack([self.population[order[2*i]].genotype,self.population[order[2*i+1]].genotype, 1-self.population[order[2*i]].genotype, 1-self.population[order[2*i+1]]].genotype)
+				parents_genotype = np.stack([self.population[order[2*i]].genotype,self.population[order[2*i+1]].genotype, 1-self.population[order[2*i]].genotype, 1-self.population[order[2*i+1]].genotype])
 				parents_fitness = np.stack([self.population[order[2*i]].fitness,self.population[order[2*i+1]].fitness, self.population[order[2*i]].fitness, self.population[order[2*i+1]].fitness])
     			#distance from parent to individual can be calculated as the absolute difference between the two
 				distance = np.sum(np.abs(parents_genotype - individual.genotype), axis=1)
