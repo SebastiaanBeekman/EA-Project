@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import random
 from functools import partial 
 
 import Variation
@@ -7,37 +8,52 @@ import Selection
 from FitnessFunction import FitnessFunction
 from Individual import Individual
 from Utils import ValueToReachFoundException
+import FamilyOfSubsets 
 
-class GeneticAlgorithm:
+class OMEA:
 	def __init__(self, fitness: FitnessFunction, population_size, **options ): 
 		self.fitness = fitness
 		self.evaluation_budget = 1000000
-		self.variation_operator = Variation.uniform_crossover
-		self.selection_operator = Selection.tournament_selection
+		self.variation_operator = Variation.GOM_variation
+		self.selection_operator = Selection.tournament_selection_for_OMEA
 		self.population_size = population_size
 		self.population = []
 		self.number_of_generations = 0
 		self.verbose = False
 		self.print_final_results = True 
+		self.FOS_operator = FamilyOfSubsets.univariate_subsets
+		self.FOS = None
 
 		if "verbose" in options:
 			self.verbose = options["verbose"]
 
 		if "evaluation_budget" in options:
 			self.evaluation_budget = options["evaluation_budget"]
+			
+		if "FOS" in options:
+			if options["FOS"] == "univariate":
+				self.FOS_operator = FamilyOfSubsets.univariate_subsets
+			elif options["FOS"] == "block":
+				self.FOS_operator = FamilyOfSubsets.block_subsets
+			elif options["FOS"] == "chain_of_cliques":
+				self.FOS_operator = FamilyOfSubsets.chain_of_cliques_subsets
+			elif options["FOS"] == "chain_of_cliques_linkage_tree":
+				self.FOS_operator = FamilyOfSubsets.chain_of_cliques_subsets_linkage_tree
+			elif options["FOS"] == "linkage_tree":
+				self.FOS_operator = FamilyOfSubsets.linkage_tree_fos_learning
+			elif options["FOS"] == "marginal_product":
+				self.FOS_operator = FamilyOfSubsets.marginal_product_fos_learning
 
 		if "variation" in options:
-			if options["variation"] == "UniformCrossover":
-				self.variation_operator = Variation.uniform_crossover
-			elif options["variation"] == "OnePointCrossover":
-				self.variation_operator = Variation.one_point_crossover
-			elif options["variation"] == "TwoPointCrossover":
-				self.variation_operator = Variation.two_point_crossover
-			elif options["variation"] == "BlockCrossover":
-				self.variation_operator = partial(Variation.block_crossover, self.fitness)
-			elif options["variation"] == "CustomCrossover":
-				self.variation_operator = partial(Variation.custom_crossover, self.fitness)
+			if options["variation"] == "GOM_variation":
+				self.variation_operator = Variation.GOM_variation
+			elif options["variation"] == "ROM_variation":
+				self.variation_operator = Variation.ROM_variation
+		
 
+
+				
+		
 	def initialize_population( self ):
 		self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
 		for individual in self.population:
@@ -46,8 +62,8 @@ class GeneticAlgorithm:
 	def make_offspring( self ):
 		offspring = []
 		order = np.random.permutation(self.population_size)
-		for i in range(len(order)//2):
-			offspring = offspring + self.variation_operator(self.population[order[2*i]],self.population[order[2*i+1]])
+		for i in range(len(order)):
+			offspring = offspring + self.variation_operator(self.fitness, self.FOS,self.population[order[i]],self.population)
 		for individual in offspring:
 			self.fitness.evaluate(individual)
 		return offspring
@@ -65,11 +81,12 @@ class GeneticAlgorithm:
 	def run( self ):
 		try:
 			self.initialize_population()
+			
 			while( self.fitness.number_of_evaluations < self.evaluation_budget ):
+				self.FOS = self.FOS_operator(self.population,self.fitness)
 				self.number_of_generations += 1
 				if( self.verbose and self.number_of_generations%100 == 0 ):
 					self.print_statistics()
-
 				offspring = self.make_offspring()
 				selection = self.make_selection(offspring)
 				self.population = selection
