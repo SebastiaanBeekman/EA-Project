@@ -5,9 +5,10 @@ from GeneticAlgorithm import GeneticAlgorithm
 import FitnessFunction
 
 def run(cx, fraction, inst):
-	with open(f"output/output-{cx}-{fraction}-{inst.rsplit('/', 1)[-1]}","w") as f:
+	with open(f"output/output-{cx}-{fraction}-{inst.replace('/', '_')}","w") as f:
 		population_size = 200
 		num_evaluations_list = []
+		best_fitnesses = []
 		num_runs = 30
 		num_success = 0
 		for i in range(num_runs):
@@ -17,15 +18,16 @@ def run(cx, fraction, inst):
 			if best_fitness == fitness.value_to_reach:
 				num_success += 1
 			num_evaluations_list.append(num_evaluations)
+			best_fitnesses.append(best_fitness)
 		print("{}/{} runs successful".format(num_success,num_runs))
 		print("{} evaluations (median)".format(np.median(num_evaluations_list)))
 		percentiles = np.percentile(num_evaluations_list,[10,50,90])
-		f.write("{} {} {} {} {}\n".format(population_size,num_success/num_runs,percentiles[0],percentiles[1],percentiles[2]))
+		f.write("{} {} {} {} {} {}\n".format(population_size,num_success/num_runs,percentiles[0],percentiles[1],percentiles[2], np.average(best_fitnesses)))
 
 
 if __name__ == "__main__":
 	# crossovers = ["CustomCrossover", "UniformCrossover", "OnePointCrossover"]
-	crossovers = ["TwoPointCrossover"]
+	crossovers = ["UniformCrossover"]
 	instances = ["maxcut-instances/setA/n0000025i09.txt", "maxcut-instances/setC/n0000050i08.txt", "maxcut-instances/setD/n0000040i09.txt", "maxcut-instances/setE/n0000040i08.txt"]
 	population_fractions = [0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.7, 1]
 	procs = []
