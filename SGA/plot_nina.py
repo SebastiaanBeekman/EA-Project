@@ -220,7 +220,9 @@ def plot_num_edges_evaluated(graphs, crossover="UniformCrossover"):
             instances[number_of_vertices].append(inst)
         else:
             instances[number_of_vertices] = [inst]
-            
+          
+    standard_average_edges_evaluated = {}  
+    standard_variance_edges_evaluated = {}
     average_edges_evaluated = {}
     variance_edges_evaluated = {}
     
@@ -234,21 +236,40 @@ def plot_num_edges_evaluated(graphs, crossover="UniformCrossover"):
                 average_edges_evaluated[number_vertices] += fitness.number_of_edges_evaluated
             else:
                 average_edges_evaluated[number_vertices] = fitness.number_of_edges_evaluated
-                
+            if number_vertices in standard_average_edges_evaluated:
+                standard_average_edges_evaluated[number_vertices] += [len(fitness.edge_list)] * num_evaluations
+            else:
+                standard_average_edges_evaluated[number_vertices] = [len(fitness.edge_list)] * num_evaluations
+            
     for number_vertices in average_edges_evaluated:
-        variance_edges_evaluated[number_vertices] = np.var(average_edges_evaluated[number_vertices])
-        average_edges_evaluated[number_vertices] = np.mean(average_edges_evaluated[number_vertices])
-
+        if len(average_edges_evaluated[number_vertices]) == 0:
+            average_edges_evaluated[number_vertices] = 0
+            variance_edges_evaluated[number_vertices] = 0
+        else:
+            variance_edges_evaluated[number_vertices] = np.var(average_edges_evaluated[number_vertices])
+            average_edges_evaluated[number_vertices] = np.mean(average_edges_evaluated[number_vertices])
+            
+    for number_vertices in standard_average_edges_evaluated:
+        if len(standard_average_edges_evaluated[number_vertices]) == 0:
+            standard_average_edges_evaluated[number_vertices] = 0
+            standard_variance_edges_evaluated[number_vertices] = 0
+        else:
+            standard_variance_edges_evaluated[number_vertices] = np.var(standard_average_edges_evaluated[number_vertices])
+            standard_average_edges_evaluated[number_vertices] = np.mean(standard_average_edges_evaluated[number_vertices])
         
     # save averages and standard deviations to a csv
     with open("SGA/partial_evaluation_figures/edges_evaluated_comparison_{}_{}.csv".format(graphs, crossover), "w") as f:
-        f.write("Number of vertices, Average number of edges evaluated, Variance of number of edges evaluated\n")
+        f.write("Number of vertices, Average number of edges evaluated, Variance of number of edges evaluated, Standard average number of edges evaluated, Variance of number of edges evaluated\n")
         for number_vertices in average_edges_evaluated:
-            f.write("{}, {}, {}\n".format(number_vertices, average_edges_evaluated[number_vertices], variance_edges_evaluated[number_vertices]))
+            f.write("{}, {}, {}, {}, {}\n".format(number_vertices, average_edges_evaluated[number_vertices], variance_edges_evaluated[number_vertices], standard_average_edges_evaluated[number_vertices], standard_variance_edges_evaluated[number_vertices]))
             
         
     plt.figure()
-    plt.plot(average_edges_evaluated.keys(),average_edges_evaluated.values())
+    plt.plot(average_edges_evaluated.keys(),average_edges_evaluated.values(), label="partial_evaluate")
+    plt.plot(standard_average_edges_evaluated.keys(),standard_average_edges_evaluated.values(), label="evaluate")
+    plt.legend()
+    plt.errorbar(average_edges_evaluated.keys(),average_edges_evaluated.values(), yerr = variance_edges_evaluated.values(), fmt='o', capsize=5)
+    plt.errorbar(standard_average_edges_evaluated.keys(),standard_average_edges_evaluated.values(), yerr = standard_variance_edges_evaluated.values(), fmt='o', capsize=5)
     plt.yscale("log")
     plt.xlabel("Number of vertices")
     plt.ylabel("Average number of edges evaluated")
