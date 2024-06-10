@@ -12,10 +12,18 @@ class FitnessFunction:
 		self.number_of_evaluations = 0
 		self.evaluation_time = 0
 		self.number_of_edges_evaluated = []
+		self.number_of_sga_evaluations = 0
+		self.number_of_local_search_evaluations = 0
 		self.value_to_reach = np.inf
 
-	def evaluate( self, individual: Individual ):
+	def evaluate( self, individual: Individual, is_local_search=False ):
 		self.number_of_evaluations += 1
+  
+		if is_local_search:
+			self.number_of_local_search_evaluations += 1
+		else:
+			self.number_of_sga_evaluations += 1
+  
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
 
@@ -109,9 +117,10 @@ class MaxCut(FitnessFunction):
 		return self.weights[(v0,v1)]
 
 	def get_degree( self, v ):
-		return len(adjacency_list(v))
-
-	def evaluate( self, individual: Individual ):
+		return len(self.adjacency_list(v))
+	
+ 	
+	def evaluate( self, individual: Individual, is_local_search=False ):
 		start = time.time()
 		result = 0
 		for e in self.edge_list:
@@ -122,7 +131,7 @@ class MaxCut(FitnessFunction):
 
 		individual.fitness = result
 		self.evaluation_time += time.time() - start
-		super().evaluate(individual)
+		super().evaluate(individual, is_local_search)
 
 	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
 		num_edges = 0
