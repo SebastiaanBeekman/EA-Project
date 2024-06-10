@@ -21,6 +21,7 @@ class GeneticAlgorithm:
 		self.print_final_results = True
 		self.heuristic_fraction = 0.5
 		self.local_search_fraction = 0.1
+		self.local_search_epsilon = 0.01
 
 		if "verbose" in options:
 			self.verbose = options["verbose"]
@@ -43,16 +44,21 @@ class GeneticAlgorithm:
    
 		if "local_search_fraction" in options:
 			self.local_search_fraction = options["local_search_fraction"]
+   
+		if "local_search_epsilon" in options:
+			self.local_search_epsilon = options["local_search_epsilon"]
 
-	def calculate_cut_weight(self, graph, A, B):
+	def calculate_cut_weight(self, edge_list, A, B):
+		self.fitness.number_of_evaluations += 1
+		
 		cut_weight = 0
-		for u in A:
-			for v in B:
-				if v in graph[u]:
-					cut_weight += graph[u][graph[u].index(v)]
+		for e in edge_list:
+			if (e[0] in A and e[1] in B) or (e[0] in B and e[1] in A):
+				cut_weight += self.fitness.weights[e]
 		return cut_weight
  
 	def greedy_maxcut_initialization(self, graph):
+		egdes = self.fitness.edge_list
 		vertices = list(graph.keys())
 		degrees = {v: len(graph[v]) for v in vertices}
 		sorted_vertices = sorted(vertices, key=lambda v: degrees[v], reverse=True)
@@ -62,7 +68,7 @@ class GeneticAlgorithm:
 		for vertex in sorted_vertices:
 			set_A = A | {vertex}
 			set_B = B | {vertex}
-			if self.calculate_cut_weight(graph, set_A, B) > self.calculate_cut_weight(graph, A, set_B):
+			if self.calculate_cut_weight(egdes, set_A, B) > self.calculate_cut_weight(egdes, A, set_B):
 				A.add(vertex)
 			else:
 				B.add(vertex)
@@ -70,9 +76,6 @@ class GeneticAlgorithm:
 		return A, B
  
 	def initialize_population( self ):
-		# self.population = [Individual.initialize_uniform_at_random(self.fitness.dimensionality) for i in range(self.population_size)]
-		# for individual in self.population:
-		# 	self.fitness.evaluate(individual)
 		heuristic_population_size = int(self.population_size * self.heuristic_fraction)
 		random_population_size = self.population_size - heuristic_population_size
 
@@ -103,31 +106,34 @@ class GeneticAlgorithm:
 		return offspring
 
 	def make_selection( self, offspring ):
-		return self.selection_operator(self.population, offspring)
+		return self.selection_operator(self.population, offspring)		
 
-	def local_search(self, individual):
+	# Based on https://courses.engr.illinois.edu/cs598csc/sp2011/Lectures/lecture_12.pdf
+	def local_search( self, individual, epsilon ):
 		improved = True
 		while improved:
 			improved = False
-			for i in range(len(individual.genotype)):
+			n = len(individual.genotype)
+			for i in range(n):
 				individual.genotype[i] = 1 - individual.genotype[i]
 				old_fitness = individual.fitness
-				self.fitness.evaluate(individual)
-				if individual.fitness > old_fitness:
+				self.fitness.evaluate(individual, is_local_search=True)
+				if individual.fitness > (1 + epsilon / n) * old_fitness:
 					improved = True
 				else:
 					individual.genotype[i] = 1 - individual.genotype[i]
 					individual.fitness = old_fitness
     
 	def apply_local_search(self):
+		epsilon = self.local_search_epsilon
 		num_local_search = int(self.population_size * self.local_search_fraction)
 		selected_individuals = np.random.choice(self.population, num_local_search, replace=False)
 		for individual in selected_individuals:
-			self.local_search(individual)
+			self.local_search(individual, epsilon)
 	
 	def print_statistics( self ):
 		fitness_list = [ind.fitness for ind in self.population]
-		print("Generation {}: Best_fitness: {:.1f}, Avg._fitness: {:.3f}, Nr._of_evaluations: {}".format(self.number_of_generations,max(fitness_list),np.mean(fitness_list),self.fitness.number_of_evaluations))
+		print("Generation {}: Best_fitness: {:.1f}, Avg._fitness: {:.3f}, Nr._of_evaluations: {}, sGA evalutations: {}, Local search evaluations {}".format(self.number_of_generations,max(fitness_list),np.mean(fitness_list),self.fitness.number_of_evaluations,self.fitness.number_of_sga_evaluations,self.fitness.number_of_local_search_evaluations))
 
 	def get_best_fitness( self ):
 		return max([ind.fitness for ind in self.population])
@@ -151,9 +157,9 @@ class GeneticAlgorithm:
 		except ValueToReachFoundException as exception:
 			if( self.print_final_results ):
 				print(exception)
-				print("Best fitness: {:.1f}, Nr._of_evaluations: {}".format(exception.individual.fitness, self.fitness.number_of_evaluations))
-			return exception.individual.fitness, self.fitness.number_of_evaluations
+				print("Best fitness: {:.1f}, Nr._of_evaluations: {}, Nr._of_sGA_evaluations: {}, Nr._of_LS_evaluations: {}".format(exception.individual.fitness, self.fitness.number_of_evaluations, self.fitness.number_of_sga_evaluations, self.fitness.number_of_local_search_evaluations))
+			return exception.individual.fitness, self.fitness.number_of_evaluations, self.fitness.number_of_sga_evaluations, self.fitness.number_of_local_search_evaluations
 		if( self.print_final_results ):
 			self.print_statistics()
-		return self.get_best_fitness(), self.fitness.number_of_evaluations
+		return self.get_best_fitness(), self.fitness.number_of_evaluations, self.fitness.number_of_sga_evaluations, self.fitness.number_of_local_search_evaluations
 

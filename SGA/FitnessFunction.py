@@ -8,10 +8,18 @@ class FitnessFunction:
 	def __init__( self ):
 		self.dimensionality = 1 
 		self.number_of_evaluations = 0
+		self.number_of_sga_evaluations = 0
+		self.number_of_local_search_evaluations = 0
 		self.value_to_reach = np.inf
 
-	def evaluate( self, individual: Individual ):
+	def evaluate( self, individual: Individual, is_local_search=False ):
 		self.number_of_evaluations += 1
+  
+		if is_local_search:
+			self.number_of_local_search_evaluations += 1
+		else:
+			self.number_of_sga_evaluations += 1
+  
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
 
@@ -102,7 +110,7 @@ class MaxCut(FitnessFunction):
 	def get_degree( self, v ):
 		return len(self.adjacency_list(v))
 
-	def evaluate( self, individual: Individual ):
+	def evaluate( self, individual: Individual, is_local_search=False ):
 		result = 0
 		for e in self.edge_list:
 			v0, v1 = e
@@ -111,5 +119,5 @@ class MaxCut(FitnessFunction):
 				result += w
 
 		individual.fitness = result
-		super().evaluate(individual)
+		super().evaluate(individual, is_local_search)
 
