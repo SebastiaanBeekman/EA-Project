@@ -195,14 +195,75 @@ def plot_evaluation_time(graphs, crossover="UniformCrossover"):
     plt.title(f"Average time per evaluation vs number of vertices {graphs}")
     plt.savefig("SGA/partial_evaluation_figures/evaluation_time_comparison_{}_{}.png".format(graphs, crossover))
     
+def plot_num_edges_evaluated(graphs, crossover="UniformCrossover"):
+    instances = {}
+    answers = []
+    directory = "SGA/maxcut-instances/{}".format(graphs)
+    files = [file for file in os.listdir(directory) if file.endswith(".txt")]
+    for i in range(len(files)):
+        inst = "SGA/maxcut-instances/{}/{}".format(graphs,files[i])
+        ans = inst.replace(".txt",".bkv")
+        
+        print(inst, ans)
+        
+        with open( inst, "r" ) as f_in:
+            lines = f_in.readlines()
+            first_line = lines[0].split()
+            number_of_vertices = int(first_line[0])
+            
+        with open( ans, "r" ) as f_in:
+            lines = f_in.readlines()
+            a = int(lines[0])
+            answers.append(a)
+            
+        if number_of_vertices in instances:
+            instances[number_of_vertices].append(inst)
+        else:
+            instances[number_of_vertices] = [inst]
+            
+    average_edges_evaluated = {}
+    variance_edges_evaluated = {}
+    
+    for number_vertices in instances:
+        for inst in instances[number_vertices]:
+            fitness = FitnessFunction.MaxCut(inst)
+            genetic_algorithm = GeneticAlgorithm(fitness,500,variation=crossover,evaluation_budget=100000,verbose=False, evaluation = "partial_evaluate")
+            best_fitness, num_evaluations, generation = genetic_algorithm.run()
+            #print(fitness.number_of_edges_evaluated)
+            if number_vertices in average_edges_evaluated:
+                average_edges_evaluated[number_vertices] += fitness.number_of_edges_evaluated
+            else:
+                average_edges_evaluated[number_vertices] = fitness.number_of_edges_evaluated
+                
+    for number_vertices in average_edges_evaluated:
+        variance_edges_evaluated[number_vertices] = np.var(average_edges_evaluated[number_vertices])
+        average_edges_evaluated[number_vertices] = np.mean(average_edges_evaluated[number_vertices])
+
+        
+    # save averages and standard deviations to a csv
+    with open("SGA/partial_evaluation_figures/edges_evaluated_comparison_{}_{}.csv".format(graphs, crossover), "w") as f:
+        f.write("Number of vertices, Average number of edges evaluated, Variance of number of edges evaluated\n")
+        for number_vertices in average_edges_evaluated:
+            f.write("{}, {}, {}\n".format(number_vertices, average_edges_evaluated[number_vertices], variance_edges_evaluated[number_vertices]))
+            
+        
+    plt.figure()
+    plt.plot(average_edges_evaluated.keys(),average_edges_evaluated.values())
+    plt.yscale("log")
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Average number of edges evaluated")
+    plt.title(f"Average number of edges evaluated vs number of vertices {graphs}")
+    plt.savefig("SGA/partial_evaluation_figures/edges_evaluated_comparison_{}_{}.png".format(graphs, crossover))
+    
 
 
 if __name__ == "__main__":
     # preprocess("setA", "UniformCrossover", 6)
     # fitness_population_size("setA", 12)
     #number_of_generations_vs_fitness("setA", 25)
-    plot_evaluation_time("setA", crossover= "OnePointCrossover")
-    plot_evaluation_time("setB", crossover="OnePointCrossover")
-    plot_evaluation_time("setC", crossover="OnePointCrossover")
-    plot_evaluation_time("setD", crossover="OnePointCrossover")
-    plot_evaluation_time("setE", crossover="OnePointCrossover")
+    # plot_evaluation_time("setA", crossover= "OnePointCrossover")
+    # plot_evaluation_time("setB", crossover="OnePointCrossover")
+    # plot_evaluation_time("setC", crossover="OnePointCrossover")
+    # plot_evaluation_time("setD", crossover="OnePointCrossover")
+    # plot_evaluation_time("setE", crossover="OnePointCrossover")
+    plot_num_edges_evaluated("setA", crossover="OnePointCrossover")

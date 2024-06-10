@@ -11,6 +11,7 @@ class FitnessFunction:
 		self.dimensionality = 1 
 		self.number_of_evaluations = 0
 		self.evaluation_time = 0
+		self.number_of_edges_evaluated = []
 		self.value_to_reach = np.inf
 
 	def evaluate( self, individual: Individual ):
@@ -122,8 +123,9 @@ class MaxCut(FitnessFunction):
 		individual.fitness = result
 		self.evaluation_time += time.time() - start
 		super().evaluate(individual)
-  
+
 	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
+		num_edges = 0
 		start = time.time()
 		#start from parent fitness
 		result = parent_fitness
@@ -136,6 +138,7 @@ class MaxCut(FitnessFunction):
 			#iterate over the neighbors of the node
 			for neighbor in self.adjacency_list[node]:
 				#check if the neighbor is in the differing nodes, if both flipped, the fitness will not change
+				num_edges += 1
 				if neighbor in differing_nodes:
 					pass
 				#else, update the fitness
@@ -146,6 +149,7 @@ class MaxCut(FitnessFunction):
 						result -= self.get_weight(node, neighbor)
 
 		individual.fitness = result
+		self.number_of_edges_evaluated.append(num_edges)
 		self.evaluation_time += time.time() - start
 		super().partial_evaluate(individual, parent_genotype, parent_fitness)
 
