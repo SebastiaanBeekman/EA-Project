@@ -4,10 +4,14 @@ import itertools as it
 import Individual
 from Utils import ValueToReachFoundException
 
+import time
+
 class FitnessFunction:
 	def __init__( self ):
 		self.dimensionality = 1 
 		self.number_of_evaluations = 0
+		self.evaluation_time = 0
+		self.number_of_edges_evaluated = []
 		self.number_of_sga_evaluations = 0
 		self.number_of_local_search_evaluations = 0
 		self.value_to_reach = np.inf
@@ -20,6 +24,11 @@ class FitnessFunction:
 		else:
 			self.number_of_sga_evaluations += 1
   
+		if individual.fitness >= self.value_to_reach:
+			raise ValueToReachFoundException(individual)
+
+	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
+		self.number_of_evaluations += 1
 		if individual.fitness >= self.value_to_reach:
 			raise ValueToReachFoundException(individual)
 
@@ -109,8 +118,10 @@ class MaxCut(FitnessFunction):
 
 	def get_degree( self, v ):
 		return len(self.adjacency_list(v))
-
+	
+ 	
 	def evaluate( self, individual: Individual, is_local_search=False ):
+		start = time.time()
 		result = 0
 		for e in self.edge_list:
 			v0, v1 = e
@@ -119,5 +130,35 @@ class MaxCut(FitnessFunction):
 				result += w
 
 		individual.fitness = result
+		self.evaluation_time += time.time() - start
 		super().evaluate(individual, is_local_search)
+
+	def partial_evaluate( self, individual: Individual, parent_genotype: np.ndarray, parent_fitness: float ):
+		num_edges = 0
+		start = time.time()
+		#start from parent fitness
+		result = parent_fitness
+	
+		#get the differing nodes between the parent and the child
+		differing_nodes = np.where(individual.genotype != parent_genotype)[0]
+
+		#iterate over the differing nodes
+		for node in differing_nodes:
+			#iterate over the neighbors of the node
+			for neighbor in self.adjacency_list[node]:
+				#check if the neighbor is in the differing nodes, if both flipped, the fitness will not change
+				num_edges += 1
+				if neighbor in differing_nodes:
+					pass
+				#else, update the fitness
+				else:
+					if individual.genotype[node] != individual.genotype[neighbor]:
+						result += self.get_weight(node, neighbor)
+					else:
+						result -= self.get_weight(node, neighbor)
+
+		individual.fitness = result
+		self.number_of_edges_evaluated.append(num_edges)
+		self.evaluation_time += time.time() - start
+		super().partial_evaluate(individual, parent_genotype, parent_fitness)
 

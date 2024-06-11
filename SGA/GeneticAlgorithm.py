@@ -14,10 +14,13 @@ class GeneticAlgorithm:
 		self.evaluation_budget = 1000000
 		self.variation_operator = Variation.uniform_crossover
 		self.selection_operator = Selection.tournament_selection
+		self.evaluation_operator = "evaluate"
 		self.population_size = population_size
 		self.population = []
 		self.number_of_generations = 0
 		self.verbose = False
+		self.print_final_results = True 
+		self.are_all_equal = False # Added to stop if all individuals are equal
 		self.print_final_results = True
 		self.heuristic_fraction = 0.5
 		self.local_search_fraction = 0.1
@@ -38,6 +41,14 @@ class GeneticAlgorithm:
 				self.variation_operator = Variation.two_point_crossover
 			elif options["variation"] == "CustomCrossover":
 				self.variation_operator = partial(Variation.custom_crossover, self.fitness)
+			elif options["variation"] == "EdgeCrossover":
+				self.variation_operator = partial(Variation.edge_crossover, self.fitness.edge_list)
+    
+		if "evaluation" in options:
+			if options["evaluation"] == "evaluate":
+				self.evaluation_operator = "evaluate"
+			elif options["evaluation"] == "partial_evaluate":
+				self.evaluation_operator = "partial_evaluate"
     
 		if "heuristic_fraction" in options:
 			self.heuristic_fraction = options["heuristic_fraction"]
@@ -102,7 +113,15 @@ class GeneticAlgorithm:
 		for i in range(len(order)//2):
 			offspring = offspring + self.variation_operator(self.population[order[2*i]],self.population[order[2*i+1]])
 		for individual in offspring:
-			self.fitness.evaluate(individual)
+			if self.evaluation_operator == "evaluate":
+				self.fitness.evaluate(individual)
+			else:
+				parents_genotype = np.stack([self.population[order[2*i]].genotype,self.population[order[2*i+1]].genotype, 1-self.population[order[2*i]].genotype, 1-self.population[order[2*i+1]].genotype])
+				parents_fitness = np.stack([self.population[order[2*i]].fitness,self.population[order[2*i+1]].fitness, self.population[order[2*i]].fitness, self.population[order[2*i+1]].fitness])
+    			#distance from parent to individual can be calculated as the absolute difference between the two
+				distance = np.sum(np.abs(parents_genotype - individual.genotype), axis=1)
+				#the closest parent is the one with the smallest distance
+				self.fitness.partial_evaluate(individual, parents_genotype[np.argmin(distance)], parents_fitness[np.argmin(distance)])
 		return offspring
 
 	def make_selection( self, offspring ):
@@ -138,10 +157,13 @@ class GeneticAlgorithm:
 	def get_best_fitness( self ):
 		return max([ind.fitness for ind in self.population])
 
+	def all_equal(self):
+		return all(x == self.population[0] for x in self.population)
+
 	def run( self ):
 		try:
 			self.initialize_population()
-			while( self.fitness.number_of_evaluations < self.evaluation_budget ):
+			while( self.fitness.number_of_evaluations < self.evaluation_budget): # stop if all individuals have the same fitness
 				self.number_of_generations += 1
 				if( self.verbose and self.number_of_generations%100 == 0 ):
 					self.print_statistics()
@@ -150,9 +172,12 @@ class GeneticAlgorithm:
 				selection = self.make_selection(offspring)
 				self.population = selection
 				
-				self.apply_local_search()
+				self.apply_local_search()			
     
-			if( self.verbose ):
+				if self.all_equal():
+					print("All individuals have the same fitness")
+					break
+			if( self.verbose and self.are_all_equal):
 				self.print_statistics()
 		except ValueToReachFoundException as exception:
 			if( self.print_final_results ):
