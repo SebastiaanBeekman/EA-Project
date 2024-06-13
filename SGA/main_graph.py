@@ -5,18 +5,18 @@ from GeneticAlgorithm import GeneticAlgorithm
 import FitnessFunction
 
 if __name__ == "__main__":
-    crossovers = ["OnePointCrossover", "TwoPointCrossover", "UniformCrossover"]
-    local_search_fractions = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]  # Example fractions to test
+    crossovers = ["OnePointCrossover", "UniformCrossover", "EdgeCrossover"]
+    local_search_fractions = [0.0, 0.1]
     results = {}
 
     for cx in crossovers:
         for fraction in local_search_fractions:
-            inst = "SGA/maxcut-instances/setA/n0000040i00.txt"
+            inst = "SGA/maxcut-instances/setA/n0000025i00.txt"
             population_size = 500
             num_evaluations_list = []
             num_sga_evaluations_list = []
             num_ls_evaluations_list = []
-            num_runs = 30
+            num_runs = 10
             num_success = 0
 
             for i in range(num_runs):
@@ -27,9 +27,10 @@ if __name__ == "__main__":
                     variation=cx,
                     evaluation_budget=100000,
                     verbose=False,
-                    heuristic_fraction=0.0,
-                    local_search_fraction=fraction,  # Set the local search fraction here
-                    local_search_epsilon=0.0
+                    heuristic_fraction=0.1,
+                    local_search_fraction=0.0,
+                    local_search_epsilon=0.0,
+                    partial_local_search=False
                 )
                 best_fitness, num_evaluations, num_sga_evaluations, num_ls_evaluations = genetic_algorithm.run()
                 if best_fitness == fitness.value_to_reach:

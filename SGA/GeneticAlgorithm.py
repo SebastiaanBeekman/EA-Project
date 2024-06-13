@@ -1,6 +1,7 @@
 import numpy as np
-import time
-from functools import partial 
+from functools import partial
+from copy import deepcopy
+import random
 
 import Variation
 import Selection
@@ -20,8 +21,8 @@ class GeneticAlgorithm:
 		self.number_of_generations = 0
 		self.verbose = False
 		self.print_final_results = True 
-		self.are_all_equal = False # Added to stop if all individuals are equal
-		self.print_final_results = True
+		self.are_all_equal = False
+		self.partial_local_search = False
 		self.heuristic_fraction = 0.5
 		self.local_search_fraction = 0.1
 		self.local_search_epsilon = 0.01
@@ -60,8 +61,6 @@ class GeneticAlgorithm:
 			self.local_search_epsilon = options["local_search_epsilon"]
 
 	def calculate_cut_weight(self, edge_list, A, B):
-		self.fitness.number_of_evaluations += 1
-		
 		cut_weight = 0
 		for e in edge_list:
 			if (e[0] in A and e[1] in B) or (e[0] in B and e[1] in A):
@@ -69,22 +68,25 @@ class GeneticAlgorithm:
 		return cut_weight
  
 	def greedy_maxcut_initialization(self, graph):
-		egdes = self.fitness.edge_list
+		n = self.fitness.dimensionality		
+		edge_list = self.fitness.edge_list
 		vertices = list(graph.keys())
 		degrees = {v: len(graph[v]) for v in vertices}
 		sorted_vertices = sorted(vertices, key=lambda v: degrees[v], reverse=True)
 		
-		A, B = set(), set()
+		set_A, set_B = set(), set()
 		
-		for vertex in sorted_vertices:
-			set_A = A | {vertex}
-			set_B = B | {vertex}
-			if self.calculate_cut_weight(egdes, set_A, B) > self.calculate_cut_weight(egdes, A, set_B):
-				A.add(vertex)
+		for u in sorted_vertices:
+			weight_A = self.calculate_cut_weight(edge_list, set_A | {u}, set_B)
+			weight_B = self.calculate_cut_weight(edge_list, set_A, set_B | {u})
+   
+			if random.random() < (weight_A / (weight_A + weight_B + 1e-12)):
+				set_A.add(u)
 			else:
-				B.add(vertex)
-		
-		return A, B
+				set_B.add(u)
+
+		genotype = [1 if i in set_A else 0 for i in range(n)]
+		return Individual(genotype)
  
 	def initialize_population( self ):
 		heuristic_population_size = int(self.population_size * self.heuristic_fraction)
@@ -94,8 +96,7 @@ class GeneticAlgorithm:
 		
 		# Generate heuristic-based individuals
 		for _ in range(heuristic_population_size):
-			A, B = self.greedy_maxcut_initialization(self.fitness.adjacency_list)
-			individual = Individual.from_sets(A, B, self.fitness.dimensionality)
+			individual = self.greedy_maxcut_initialization(self.fitness.adjacency_list)
 			self.fitness.evaluate(individual)
 			population.append(individual)
 		
@@ -132,11 +133,17 @@ class GeneticAlgorithm:
 		improved = True
 		while improved:
 			improved = False
-			n = len(individual.genotype)
+			n = len(individual.genotype) # number of nodes in the graph
 			for i in range(n):
 				individual.genotype[i] = 1 - individual.genotype[i]
 				old_fitness = individual.fitness
-				self.fitness.evaluate(individual, is_local_search=True)
+
+				if self.partial_local_search:
+					old_individual = deepcopy(individual)
+					self.fitness.partial_evaluate(individual, old_individual.genotype, old_fitness)
+				else:
+					self.fitness.evaluate(individual, is_local_search=True)
+				
 				if individual.fitness > (1 + epsilon / n) * old_fitness:
 					improved = True
 				else:
