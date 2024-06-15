@@ -1,8 +1,4 @@
 import numpy as np
-import time
-import random
-from functools import partial 
-
 import Variation
 import Selection
 from FitnessFunction import FitnessFunction
@@ -33,12 +29,6 @@ class OMEA:
 		if "FOS" in options:
 			if options["FOS"] == "univariate":
 				self.FOS_operator = FamilyOfSubsets.univariate_subsets
-			elif options["FOS"] == "block":
-				self.FOS_operator = FamilyOfSubsets.block_subsets
-			elif options["FOS"] == "chain_of_cliques":
-				self.FOS_operator = FamilyOfSubsets.chain_of_cliques_subsets
-			elif options["FOS"] == "chain_of_cliques_linkage_tree":
-				self.FOS_operator = FamilyOfSubsets.chain_of_cliques_subsets_linkage_tree
 			elif options["FOS"] == "linkage_tree":
 				self.FOS_operator = FamilyOfSubsets.linkage_tree_fos_learning
 			elif options["FOS"] == "marginal_product":

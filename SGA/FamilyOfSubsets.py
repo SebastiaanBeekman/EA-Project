@@ -7,34 +7,6 @@ def univariate_subsets(population, fitness: FitnessFunction ):
         subsets.append([i])
     return subsets
 
-def chain_of_cliques_subsets_linkage_tree(population,  fitness: FitnessFunction ):
-    subsets = [[0,1,2,3,4]]
-    i = 5
-    while i < fitness.dimensionality-4:
-        subsets.append([i,i+1,i+2,i+3,i+4])
-        subsets.append(subsets[-2]+[i,i+1,i+2,i+3,i+4])
-        i += 5
- 
-    return subsets
-
-def chain_of_cliques_subsets(population,  fitness: FitnessFunction ):
-    subsets = [[0,1,2,3,4]]
-    i = 5
-    while i < fitness.dimensionality-4:
-        subsets.append([i,i+1,i+2,i+3,i+4])
-        subsets.append([i-1,i])
-        i += 5
- 
-    return subsets
-
-def block_subsets(population,  fitness: FitnessFunction, block_size = 5):
-    assert fitness.dimensionality % block_size == 0, "Dimensionality should be a multiple of block size"
-    subsets = []
-    for i in range(fitness.dimensionality):
-        if i % block_size == 0:
-            subsets.append([i,i+1,i+2,i+3,i+4])
-    return subsets
-
 def linkage_tree_fos_learning(population, fitness: FitnessFunction): 
 
     entropy_values = entropy_matrix(population, fitness)
