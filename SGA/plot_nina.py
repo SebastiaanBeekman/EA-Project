@@ -4,6 +4,7 @@ import os
 from GeneticAlgorithm import GeneticAlgorithm
 import FitnessFunction
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def fitness_population_size(graphs, number_vertices):
@@ -222,14 +223,16 @@ def plot_num_edges_evaluated(graphs, crossover="UniformCrossover"):
             instances[number_of_vertices] = [inst]
           
     standard_average_edges_evaluated = {}  
+    standard_median_edges_evaluated = {}
     standard_variance_edges_evaluated = {}
     average_edges_evaluated = {}
+    median_edges_evaluated = {}
     variance_edges_evaluated = {}
     
     for number_vertices in instances:
         for inst in instances[number_vertices]:
             fitness = FitnessFunction.MaxCut(inst)
-            genetic_algorithm = GeneticAlgorithm(fitness,500,variation=crossover,evaluation_budget=100000,verbose=False, evaluation = "partial_evaluate")
+            genetic_algorithm = GeneticAlgorithm(fitness,500,variation=crossover,evaluation_budget=10000,verbose=False, evaluation = "partial_evaluate")
             best_fitness, num_evaluations, generation = genetic_algorithm.run()
             #print(fitness.number_of_edges_evaluated)
             if number_vertices in average_edges_evaluated:
@@ -244,37 +247,100 @@ def plot_num_edges_evaluated(graphs, crossover="UniformCrossover"):
     for number_vertices in average_edges_evaluated:
         if len(average_edges_evaluated[number_vertices]) == 0:
             average_edges_evaluated[number_vertices] = 0
+            median_edges_evaluated[number_vertices] = 0
             variance_edges_evaluated[number_vertices] = 0
         else:
             variance_edges_evaluated[number_vertices] = np.var(average_edges_evaluated[number_vertices])
+            median_edges_evaluated[number_vertices] = np.median(average_edges_evaluated[number_vertices])
             average_edges_evaluated[number_vertices] = np.mean(average_edges_evaluated[number_vertices])
             
     for number_vertices in standard_average_edges_evaluated:
         if len(standard_average_edges_evaluated[number_vertices]) == 0:
             standard_average_edges_evaluated[number_vertices] = 0
+            standard_median_edges_evaluated[number_vertices] = 0
             standard_variance_edges_evaluated[number_vertices] = 0
         else:
             standard_variance_edges_evaluated[number_vertices] = np.var(standard_average_edges_evaluated[number_vertices])
+            standard_median_edges_evaluated[number_vertices] = np.median(standard_average_edges_evaluated[number_vertices])
             standard_average_edges_evaluated[number_vertices] = np.mean(standard_average_edges_evaluated[number_vertices])
         
     # save averages and standard deviations to a csv
     with open("SGA/partial_evaluation_figures/edges_evaluated_comparison_{}_{}.csv".format(graphs, crossover), "w") as f:
-        f.write("Number of vertices, Average number of edges evaluated, Variance of number of edges evaluated, Standard average number of edges evaluated, Variance of number of edges evaluated\n")
+        f.write("Number of vertices, Average number of edges evaluated, Median number of edges evaluated, Variance of number of edges evaluated, Standard average number of edges evaluated, Standard median number of edges evaluated, Standard variance of number of edges evaluated\n")
         for number_vertices in average_edges_evaluated:
-            f.write("{}, {}, {}, {}, {}\n".format(number_vertices, average_edges_evaluated[number_vertices], variance_edges_evaluated[number_vertices], standard_average_edges_evaluated[number_vertices], standard_variance_edges_evaluated[number_vertices]))
+            f.write("{}, {}, {}, {}, {}, {}, {}\n".format(
+                number_vertices, 
+                average_edges_evaluated[number_vertices], 
+                median_edges_evaluated[number_vertices], 
+                variance_edges_evaluated[number_vertices], 
+                standard_average_edges_evaluated[number_vertices], 
+                standard_median_edges_evaluated[number_vertices], 
+                standard_variance_edges_evaluated[number_vertices]))
             
         
     plt.figure()
     plt.plot(average_edges_evaluated.keys(),average_edges_evaluated.values(), label="partial_evaluate")
     plt.plot(standard_average_edges_evaluated.keys(),standard_average_edges_evaluated.values(), label="evaluate")
     plt.legend()
-    plt.errorbar(average_edges_evaluated.keys(),average_edges_evaluated.values(), yerr = variance_edges_evaluated.values(), fmt='o', capsize=5)
-    plt.errorbar(standard_average_edges_evaluated.keys(),standard_average_edges_evaluated.values(), yerr = standard_variance_edges_evaluated.values(), fmt='o', capsize=5)
+    plt.errorbar(list(average_edges_evaluated.keys()),list(average_edges_evaluated.values()), yerr = np.sqrt(list(variance_edges_evaluated.values())), fmt='o', capsize=5)
+    plt.errorbar(list(standard_average_edges_evaluated.keys()),list(standard_average_edges_evaluated.values()), yerr = np.sqrt(list(standard_variance_edges_evaluated.values())), fmt='o', capsize=5)
     plt.yscale("log")
     plt.xlabel("Number of vertices")
     plt.ylabel("Average number of edges evaluated")
     plt.title(f"Average number of edges evaluated vs number of vertices {graphs}")
     plt.savefig("SGA/partial_evaluation_figures/edges_evaluated_comparison_{}_{}.png".format(graphs, crossover))
+    
+def plot_edges_evaluated(set):
+    crossovers = ["UniformCrossover", "OnePointCrossover", "TwoPointCrossover", "EdgeCrossover"]
+    num_vert = {}
+    avg_edges_evaluated = {}
+    std_edges_evaluated = {}
+    for crossover in crossovers:
+        df = pd.read_csv(f"SGA/partial_evaluation_figures/edges_evaluated_comparison_{set}_{crossover}.csv", header=0)
+        #print(df.columns)
+        num_vert[crossover] = df["Number of vertices"]
+        avg_edges_evaluated[crossover] = df[" Average number of edges evaluated"]
+        std_edges_evaluated[crossover] = df[" Variance of number of edges evaluated"]
+        
+    plt.figure()
+    for crossover in crossovers:
+        plt.errorbar(num_vert[crossover], avg_edges_evaluated[crossover], yerr = np.sqrt(std_edges_evaluated[crossover]), fmt='-o', capsize=5, label=crossover)
+    #baseline is standard evaluate
+    plt.errorbar(df["Number of vertices"], df[" Standard average number of edges evaluated"], yerr = np.sqrt(df[" Standard variance of number of edges evaluated"]), fmt='-o', capsize=5, label="Full evaluate")
+    plt.yscale("log")
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Average number of edges evaluated")
+    #plt.title(f"Average number of edges evaluated vs number of vertices {set}")
+    plt.legend()
+    plt.savefig(f"SGA/partial_evaluation_figures/edges_evaluated_comparison_{set}.png")
+    
+def plot_edges_evaluated_crossover(crossover):
+    sets = ["setA", "setB", "setC", "setD", "setE"]
+    num_vert = {}
+    avg_edges_evaluated = {}
+    std_edges_evaluated = {}
+    standard_avg_edges_evaluated = {}
+    standard_std_edges_evaluated = {}
+    for set in sets:
+        df = pd.read_csv(f"SGA/partial_evaluation_figures/edges_evaluated_comparison_{set}_{crossover}.csv", header=0)
+        #print(df.columns)
+        num_vert[set] = df["Number of vertices"]
+        avg_edges_evaluated[set] = df[" Average number of edges evaluated"]
+        std_edges_evaluated[set] = df[" Variance of number of edges evaluated"]
+        standard_avg_edges_evaluated[set] = df[" Standard average number of edges evaluated"]
+        standard_std_edges_evaluated[set] = df[" Standard variance of number of edges evaluated"]
+        
+    plt.figure()
+    for set in sets:
+        plt.errorbar(num_vert[set], avg_edges_evaluated[set], yerr = np.sqrt(std_edges_evaluated[set]), fmt='-o', capsize=5, label=f"{set} partial evaluation")
+        plt.errorbar(num_vert[set], standard_avg_edges_evaluated[set], yerr = np.sqrt(standard_std_edges_evaluated[set]), fmt='-o', capsize=5, label=f"{set} full evaluation")
+    plt.yscale("log")
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Average number of edges evaluated")
+    plt.title(f"Average number of edges evaluated vs number of vertices {crossover}")
+    plt.legend()
+    plt.savefig(f"SGA/partial_evaluation_figures/edges_evaluated_comparison_{crossover}.png")
+    
     
 
 
@@ -287,4 +353,29 @@ if __name__ == "__main__":
     # plot_evaluation_time("setC", crossover="OnePointCrossover")
     # plot_evaluation_time("setD", crossover="OnePointCrossover")
     # plot_evaluation_time("setE", crossover="OnePointCrossover")
-    plot_num_edges_evaluated("setA", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setA", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setB", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setC", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setD", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setE", crossover="OnePointCrossover")
+    # plot_num_edges_evaluated("setA", crossover="UniformCrossover")
+    # plot_num_edges_evaluated("setB", crossover="UniformCrossover")
+    # plot_num_edges_evaluated("setC", crossover="UniformCrossover")
+    # plot_num_edges_evaluated("setD", crossover="UniformCrossover")
+    # plot_num_edges_evaluated("setE", crossover="UniformCrossover")
+    # plot_num_edges_evaluated("setA", crossover="TwoPointCrossover")
+    # plot_num_edges_evaluated("setB", crossover="TwoPointCrossover")
+    # plot_num_edges_evaluated("setC", crossover="TwoPointCrossover")
+    # plot_num_edges_evaluated("setD", crossover="TwoPointCrossover")
+    # plot_num_edges_evaluated("setE", crossover="TwoPointCrossover")
+    # plot_num_edges_evaluated("setA", crossover="EdgeCrossover")
+    plot_num_edges_evaluated("setB", crossover="EdgeCrossover")
+    # plot_num_edges_evaluated("setC", crossover="EdgeCrossover")
+    # plot_num_edges_evaluated("setD", crossover="EdgeCrossover")
+    # plot_num_edges_evaluated("setE", crossover="EdgeCrossover")
+    # plot_edges_evaluated("setA")
+    # plot_edges_evaluated("setB")
+    # plot_edges_evaluated("setC")
+    # plot_edges_evaluated("setD")
+    # plot_edges_evaluated("setE")
+    #plot_edges_evaluated_crossover("UniformCrossover")

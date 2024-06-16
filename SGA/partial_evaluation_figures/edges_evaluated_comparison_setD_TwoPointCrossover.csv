@@ -1,0 +1,6 @@
+Number of vertices, Average number of edges evaluated, Median number of edges evaluated, Variance of number of edges evaluated, Standard average number of edges evaluated, Standard median number of edges evaluated, Standard variance of number of edges evaluated
+10, 14.243207422133864, 0.0, 18.095257041800448, 21.0, 351.0, 0.0
+20, 30.344147171599673, 0.0, 52.48274319905483, 43.0, 351.0, 0.0
+40, 15.254008817215395, 0.0, 744.3471982428762, 87.0, 351.0, 0.0
+80, 14.235243394309505, 0.0, 1340.8384775461668, 175.0, 351.0, 0.0
+160, 31.486463316582913, 0.0, 5926.339344396396, 351.0, 351.0, 0.0
