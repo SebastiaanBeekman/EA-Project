@@ -39,8 +39,8 @@ def run_experiment(instance, cx, k_fraction, epsilon, population_size=500, num_r
     return success_rate, median_num_evaluations, median_num_sga_evaluations, median_num_ls_evaluations
 
 if __name__ == "__main__":
-    instances = ["setB/n0000049i00.txt"]
-    crossovers = ["OnePointCrossover", "TwoPointCrossover","UniformCrossover", "EdgeCrossover"]
+    instances = ["setA/n0000025i00.txt"]
+    crossovers = ["UniformCrossover"]
     k_values = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
     epsilon_values = [0.0, 0.001, 0.01, 0.1, 0.5]
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                         continue
                     
                     print(f"Running experiment for {instance} with {cx}, k={k}, epsilon={epsilon}")
-                    success_rate, median_num_evaluations, median_num_sga_evaluations, median_num_ls_evaluations = run_experiment(f"SGA/maxcut-instances/{instance}", cx, k, epsilon)
+                    success_rate, median_num_evaluations, median_num_sga_evaluations, median_num_ls_evaluations = run_experiment(f"SGA/maxcut-instances/{instance}", cx, k, epsilon, num_runs=10)
                     
                     success_rate_results.append((k, epsilon, success_rate))
                     median_evaluations_results.append((k, epsilon, median_num_evaluations, median_num_sga_evaluations, median_num_ls_evaluations))
@@ -74,7 +74,8 @@ if __name__ == "__main__":
             axes[0].set_xlabel("Epsilon")
             axes[0].set_ylabel("k%")
             
-            success_rate_df.to_csv(f"data/heatmap/data/{instance_set}_{cx}_heatmap.csv", index=False)
+            # success_rate_df.to_csv(f"data/heatmap/data/partial_{instance_set}_{cx}_heatmap.csv", index=False)
+            success_rate_df.to_csv(f"partial_{instance_set}_{cx}_heatmap.csv", index=False)
             
             median_evaluations_df = pd.DataFrame(median_evaluations_results, columns=["k%", "epsilon", "median_num_evaluations", "median_num_sga_evaluations", "median_num_ls_evaluations"])
             median_evaluations_pivot_table = median_evaluations_df.pivot(index="k%", columns="epsilon", values="median_num_evaluations")
@@ -86,6 +87,8 @@ if __name__ == "__main__":
             axes[1].set_ylabel("k%")
             
             plt.tight_layout()
-            plt.savefig(f"data/heatmap/figs/{instance_set}_{cx}_heatmap_median_evaluations.png")
+            # plt.savefig(f"data/heatmap/figs/partial_{instance_set}_{cx}_heatmap_median_evaluations.png")
+            plt.savefig(f"partial_{instance_set}_{cx}_heatmap_median_evaluations.png")
             
-            median_evaluations_df.to_csv(f"data/heatmap/data/{instance_set}_{cx}_median_evaluations.csv", index=False)
+            # median_evaluations_df.to_csv(f"data/heatmap/data/partial_{instance_set}_{cx}_median_evaluations.csv", index=False)
+            median_evaluations_df.to_csv(f"partial_{instance_set}_{cx}_median_evaluations.csv", index=False)
